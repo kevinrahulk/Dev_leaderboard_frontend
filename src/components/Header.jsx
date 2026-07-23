@@ -10,7 +10,10 @@ import {
   Tab,
   Chip,
   useTheme,
-  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -18,16 +21,20 @@ import LightModeIcon from "@mui/icons-material/LightMode";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LeaderboardIcon from "@mui/icons-material/Leaderboard";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
+import CloudOffIcon from "@mui/icons-material/CloudOff";
 import { useAppDispatch, useAppSelector } from "../hooks/reduxHooks";
-import { setActiveTab, toggleThemeMode } from "../store/slices/leaderboardSlice";
+import { setActiveTab, toggleThemeMode, setActiveProjectId } from "../store/slices/leaderboardSlice";
 
 export default function Header() {
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const { activeTab, themeMode, envSettings } = useAppSelector((state) => state.leaderboard);
+  const { activeTab, themeMode, projects, activeProjectId } = useAppSelector(
+    (state) => state.leaderboard
+  );
 
+  const activeProject = projects.find((p) => p.id === activeProjectId);
   const isJiraConnected = Boolean(
-    envSettings?.JIRA_BASE_URL && envSettings?.JIRA_API_TOKEN
+    activeProject?.jira_base_url && activeProject?.jira_api_token
   );
 
   return (
@@ -73,7 +80,7 @@ export default function Header() {
                 StarHolder
               </Typography>
               <Chip
-                label="v2.0"
+                label="v3.0"
                 size="small"
                 sx={{
                   height: 20,
@@ -85,13 +92,35 @@ export default function Header() {
               />
             </Stack>
             <Typography variant="caption" color="text.secondary" sx={{ display: { xs: "none", sm: "block" } }}>
-              Developer Quality Leaderboard & Insight Platform
+              Multi-Project Quality Leaderboard Platform
             </Typography>
           </Box>
         </Stack>
 
-        {/* Navigation Tabs */}
-        <Box sx={{ my: { xs: 1, md: 0 } }}>
+        {/* Project Selector & Navigation Tabs */}
+        <Stack direction="row" alignItems="center" spacing={3}>
+          {projects.length > 0 && (
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel id="project-select-label">Active Project</InputLabel>
+              <Select
+                labelId="project-select-label"
+                value={activeProjectId}
+                label="Active Project"
+                onChange={(e) => dispatch(setActiveProjectId(e.target.value))}
+                sx={{
+                  fontWeight: 600,
+                  bgcolor: theme.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+                }}
+              >
+                {projects.map((proj) => (
+                  <MenuItem key={proj.id} value={proj.id} sx={{ fontWeight: 500 }}>
+                    {proj.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
           <Tabs
             value={activeTab}
             onChange={(_, val) => dispatch(setActiveTab(val))}
@@ -117,24 +146,32 @@ export default function Header() {
             <Tab
               icon={<SettingsIcon sx={{ fontSize: 20 }} />}
               iconPosition="start"
-              label="Settings (.env)"
+              label="Settings"
               id="tab-settings"
             />
           </Tabs>
-        </Box>
+        </Stack>
 
         {/* Action Controls & Theme Switcher */}
         <Stack direction="row" alignItems="center" spacing={1.5}>
-          <Tooltip title={isJiraConnected ? "Jira Live Connection Configured" : "Jira Credentials Pending in Settings"}>
-            <Chip
-              icon={<CloudDoneIcon sx={{ fontSize: 16 }} />}
-              label={isJiraConnected ? "Jira Active" : "Jira Disconnected"}
-              size="small"
-              color={isJiraConnected ? "success" : "default"}
-              variant={isJiraConnected ? "filled" : "outlined"}
-              sx={{ fontWeight: 600, display: { xs: "none", sm: "inline-flex" } }}
-            />
-          </Tooltip>
+          {projects.length > 0 && (
+            <Tooltip
+              title={
+                isJiraConnected
+                  ? `Jira Sync available for ${activeProject?.name}`
+                  : "Sync unavailable - pending credentials in Settings"
+              }
+            >
+              <Chip
+                icon={isJiraConnected ? <CloudDoneIcon sx={{ fontSize: 16 }} /> : <CloudOffIcon sx={{ fontSize: 16 }} />}
+                label={isJiraConnected ? "Jira Active" : "Jira Inactive"}
+                size="small"
+                color={isJiraConnected ? "success" : "default"}
+                variant={isJiraConnected ? "filled" : "outlined"}
+                sx={{ fontWeight: 600, display: { xs: "none", sm: "inline-flex" } }}
+              />
+            </Tooltip>
+          )}
 
           <Tooltip title={themeMode === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}>
             <IconButton

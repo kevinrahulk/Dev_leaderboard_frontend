@@ -4,9 +4,10 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
 });
 
-// range: "sprint" | "1m" | "3m" | "6m" | "all"
-export async function fetchLeaderboard({ range, sprintId, startDate, endDate, limit }) {
-  const params = { range };
+// fetchLeaderboard requires a projectId
+export async function fetchLeaderboard({ projectId, range, sprintId, startDate, endDate, limit }) {
+  if (!projectId) return null;
+  const params = { project_id: projectId, range };
   if (sprintId) params.sprint_id = sprintId;
   if (range === "custom") {
     params.start_date = startDate;
@@ -18,41 +19,57 @@ export async function fetchLeaderboard({ range, sprintId, startDate, endDate, li
   return data;
 }
 
-export async function fetchSprints() {
-  const { data } = await api.get("/sprints");
+// fetchSprints requires a projectId
+export async function fetchSprints(projectId) {
+  const params = {};
+  if (projectId) params.project_id = projectId;
+  const { data } = await api.get("/sprints", { params });
   return data;
 }
 
-export async function uploadCsv(file) {
+// uploadCsv requires a projectId
+export async function uploadCsv(projectId, file) {
   const formData = new FormData();
   formData.append("file", file);
   const { data } = await api.post("/import/csv", formData, {
+    params: { project_id: projectId },
     headers: { "Content-Type": "multipart/form-data" },
   });
   return data;
 }
 
-export async function syncJira(jql) {
-  const { data } = await api.post("/sync/jira", null, {
-    params: jql ? { jql } : {},
-  });
+// syncJira requires a projectId
+export async function syncJira(projectId, jql) {
+  const params = { project_id: projectId };
+  if (jql) params.jql = jql;
+  const { data } = await api.post("/sync/jira", null, { params });
   return data;
 }
 
-export async function fetchEnvSettings() {
-  const { data } = await api.get("/settings/env");
+// Project Management Endpoints
+export async function fetchProjects() {
+  const { data } = await api.get("/projects");
   return data;
 }
 
-export async function updateEnvSettings(payload) {
-  const { data } = await api.post("/settings/env", payload);
+export async function createProject(payload) {
+  const { data } = await api.post("/projects", payload);
   return data;
 }
 
-export async function testJiraConnection(payload) {
-  const { data } = await api.post("/settings/jira/test", payload);
+export async function updateProject(id, payload) {
+  const { data } = await api.put(`/projects/${id}`, payload);
+  return data;
+}
+
+export async function deleteProject(id) {
+  const { data } = await api.delete(`/projects/${id}`);
+  return data;
+}
+
+export async function testProjectConnection(id) {
+  const { data } = await api.post(`/projects/${id}/test`);
   return data;
 }
 
 export default api;
-

@@ -38,7 +38,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import { useLeaderboard } from "../hooks/useLeaderboard";
 import { useAppDispatch, useAppSelector } from "../hooks/reduxHooks";
-import { setSearchQuery, setCustomDates } from "../store/slices/leaderboardSlice";
+import { setSearchQuery, setCustomDates, setActiveTab } from "../store/slices/leaderboardSlice";
 import Podium from "./Podium";
 import BugChart from "./BugChart";
 
@@ -94,6 +94,8 @@ export default function Leaderboard() {
   const startDate = useAppSelector((state) => state.leaderboard.startDate);
   const endDate = useAppSelector((state) => state.leaderboard.endDate);
 
+  const projects = useAppSelector((state) => state.leaderboard.projects);
+
   const {
     range,
     sprints,
@@ -127,10 +129,31 @@ export default function Leaderboard() {
 
   const maxBugs = data?.entries?.reduce((max, e) => Math.max(max, e.bug_count), 1) || 1;
 
+  if (projects.length === 0) {
+    return (
+      <Paper variant="outlined" sx={{ p: 6, textAlign: "center", borderRadius: 2, mt: 2 }}>
+        <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>
+          🏆 Welcome to StarHolder!
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          To view the developer quality leaderboard, please configure your first project and credentials in the Settings tab.
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => dispatch(setActiveTab(1))}
+          sx={{ borderRadius: 1 }}
+        >
+          Go to Settings
+        </Button>
+      </Paper>
+    );
+  }
+
   return (
     <Box>
       {/* Top Controls Header */}
-      <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: 3 }}>
+      <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: 2 }}>
         {/* Row 1: Timeframe Mode Buttons & Action Buttons */}
         <Stack
           direction={{ xs: "column", md: "row" }}

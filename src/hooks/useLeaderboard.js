@@ -13,6 +13,7 @@ import {
 export function useLeaderboard() {
   const dispatch = useAppDispatch();
   const {
+    activeProjectId,
     range,
     sprints,
     sprintId,
@@ -26,14 +27,19 @@ export function useLeaderboard() {
     snackbar,
   } = useAppSelector((state) => state.leaderboard);
 
+  // 1. Fetch sprints when active project changes
   useEffect(() => {
-    dispatch(fetchSprints());
-  }, [dispatch]);
+    if (activeProjectId) {
+      dispatch(fetchSprints());
+    }
+  }, [dispatch, activeProjectId]);
 
+  // 2. Fetch leaderboard when project, range, sprint, or dates change
   useEffect(() => {
+    if (!activeProjectId) return;
     if (range === "custom" && (!startDate || !endDate)) return;
     dispatch(fetchLeaderboard({ range, sprintId, startDate, endDate }));
-  }, [dispatch, range, sprintId, startDate, endDate]);
+  }, [dispatch, activeProjectId, range, sprintId, startDate, endDate]);
 
   const handleRangeChange = useCallback(
     (newRange) => {

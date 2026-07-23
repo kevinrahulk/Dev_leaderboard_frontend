@@ -8,16 +8,16 @@ import SettingsPage from "./components/SettingsPage";
 
 import { useAppDispatch, useAppSelector } from "./hooks/reduxHooks";
 import { getTheme } from "./theme";
-import { closeSnackbar, getEnvSettings } from "./store/slices/leaderboardSlice";
+import { closeSnackbar, getProjects } from "./store/slices/leaderboardSlice";
 
 export default function App() {
   const dispatch = useAppDispatch();
-  const { themeMode, activeTab, snackbar } = useAppSelector((state) => state.leaderboard);
+  const { themeMode, activeTab, snackbar, projects } = useAppSelector((state) => state.leaderboard);
 
   const theme = getTheme(themeMode);
 
   useEffect(() => {
-    dispatch(getEnvSettings());
+    dispatch(getProjects());
   }, [dispatch]);
 
   return (
@@ -31,7 +31,7 @@ export default function App() {
 
           {activeTab === 0 && (
             <>
-              <KpiCards />
+              {projects.length > 0 && <KpiCards />}
               <Leaderboard />
             </>
           )}

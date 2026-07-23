@@ -12,234 +12,336 @@ import {
   Tooltip,
   Alert,
   CircularProgress,
-  Divider,
   Chip,
   Card,
   CardContent,
+  CardActions,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
+  useTheme,
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import SaveIcon from "@mui/icons-material/Save";
-import KeyIcon from "@mui/icons-material/Key";
-import StorageIcon from "@mui/icons-material/Storage";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import ConnectionIcon from "@mui/icons-material/NetworkCheck";
-import InfoIcon from "@mui/icons-material/Info";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 
 import { useAppDispatch, useAppSelector } from "../hooks/reduxHooks";
-import { getEnvSettings, saveEnvSettings, testJira } from "../store/slices/leaderboardSlice";
+import {
+  getProjects,
+  addProject,
+  editProject,
+  removeProject,
+  testProject,
+  setActiveProjectId,
+} from "../store/slices/leaderboardSlice";
 
 export default function SettingsPage() {
   const dispatch = useAppDispatch();
-  const { envSettings, envLoading, envSaving, jiraTesting, jiraTestResult } = useAppSelector(
-    (state) => state.leaderboard
-  );
+  const theme = useTheme();
 
-  const [formValues, setFormValues] = useState({
-    JIRA_BASE_URL: "",
-    JIRA_EMAIL: "",
-    JIRA_API_TOKEN: "",
-    JIRA_PROJECT_KEY: "",
-  });
+  const {
+    projects,
+    activeProjectId,
+    projectsLoading,
+    projectSaving,
+    jiraTesting,
+    jiraTestResult,
+  } = useAppSelector((state) => state.leaderboard);
 
+  // Modal State
+  const [openModal, setOpenModal] = useState(false);
+  const [editingProj, setEditingProj] = useState(null); // null means adding a new one
   const [showToken, setShowToken] = useState(false);
 
-  useEffect(() => {
-    dispatch(getEnvSettings());
-  }, [dispatch]);
+  const [formValues, setFormValues] = useState({
+    name: "",
+    jira_project_key: "",
+    jira_base_url: "",
+    jira_email: "",
+    jira_api_token: "",
+  });
 
   useEffect(() => {
-    if (envSettings) {
-      setFormValues({
-        JIRA_BASE_URL: envSettings.JIRA_BASE_URL || "",
-        JIRA_EMAIL: envSettings.JIRA_EMAIL || "",
-        JIRA_API_TOKEN: envSettings.JIRA_API_TOKEN || "",
-        JIRA_PROJECT_KEY: envSettings.JIRA_PROJECT_KEY || "",
-      });
-    }
-  }, [envSettings]);
+    dispatch(getProjects());
+  }, [dispatch]);
+
+  const handleOpenAdd = () => {
+    setEditingProj(null);
+    setFormValues({
+      name: "",
+      jira_project_key: "",
+      jira_base_url: "",
+      jira_email: "",
+      jira_api_token: "",
+    });
+    setOpenModal(true);
+  };
+
+  const handleOpenEdit = (proj) => {
+    setEditingProj(proj);
+    setFormValues({
+      name: proj.name || "",
+      jira_project_key: proj.jira_project_key || "",
+      jira_base_url: proj.jira_base_url || "",
+      jira_email: proj.jira_email || "",
+      jira_api_token: proj.jira_api_token || "",
+    });
+    setOpenModal(true);
+  };
+
+  const handleClose = () => {
+    setOpenModal(false);
+  };
 
   const handleChange = (field) => (e) => {
     setFormValues({ ...formValues, [field]: e.target.value });
   };
 
-  const handleSave = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(saveEnvSettings(formValues));
+    if (editingProj) {
+      dispatch(editProject({ id: editingProj.id, payload: formValues }));
+    } else {
+      dispatch(addProject(formValues));
+    }
+    setOpenModal(false);
   };
 
-  const handleTestJiraConnection = () => {
-    dispatch(testJira(formValues));
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Are you sure you want to delete the project "${name}"? This removes all local bug statistics.`)) {
+      dispatch(removeProject(id));
+    }
+  };
+
+  const handleTestConnection = (id) => {
+    dispatch(testProject(id));
   };
 
   return (
-    <Box sx={{ maxWidth: 880, mx: "auto", py: 2 }}>
+    <Box sx={{ maxWidth: 960, mx: "auto", py: 2 }}>
+      {/* Header and Configure New Button */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
         <Box>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography variant="h5" fontWeight={700}>
-              Jira & Environment Settings
-            </Typography>
-            <Chip label="backend/.env" color="primary" variant="outlined" size="small" />
-          </Stack>
+          <Typography variant="h5" fontWeight={700}>
+            Manage Projects
+          </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Directly update backend Jira API credentials and project settings.
+            Configure and link multiple software project dashboards with Jira API keys.
           </Typography>
         </Box>
 
         <Button
           variant="contained"
           color="primary"
-          startIcon={envSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
-          onClick={handleSave}
-          disabled={envSaving || envLoading}
+          startIcon={<AddIcon />}
+          onClick={handleOpenAdd}
+          sx={{ borderRadius: 1 }}
         >
-          {envSaving ? "Saving .env..." : "Save Settings"}
+          New Project
         </Button>
       </Stack>
 
-      {envLoading ? (
+      {/* Projects Grid List */}
+      {projectsLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
           <CircularProgress />
         </Box>
+      ) : projects.length === 0 ? (
+        <Paper variant="outlined" sx={{ p: 6, textCenter: "center", borderRadius: 2, textAlign: "center" }}>
+          <Typography variant="h6" fontWeight={600} gutterBottom>
+            No Projects Configured
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Get started by adding a software project with its Atlassian Jira API settings.
+          </Typography>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenAdd}>
+            Configure Project
+          </Button>
+        </Paper>
       ) : (
-        <form onSubmit={handleSave}>
-          <Grid container spacing={3}>
-            {/* Jira Integration Section */}
-            <Grid item xs={12}>
-              <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                  <Stack direction="row" alignItems="center" spacing={1.5}>
-                    <Box
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 2,
-                        bgcolor: "rgba(59, 130, 246, 0.12)",
-                        color: "#3B82F6",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <KeyIcon fontSize="small" />
-                    </Box>
-                    <Box>
-                      <Typography variant="h6" fontWeight={700}>
-                        Jira REST API Credentials
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Used to fetch live bug tickets and sync sprint statistics
-                      </Typography>
-                    </Box>
-                  </Stack>
+        <Grid container spacing={3}>
+          {projects.map((proj) => {
+            const isActive = proj.id === activeProjectId;
+            const hasJira = Boolean(proj.jira_base_url && proj.jira_api_token);
 
-                  <Tooltip title="Test whether provided Jira credentials can authenticate and fetch tickets" arrow>
+            return (
+              <Grid item xs={12} sm={6} key={proj.id}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 2,
+                    borderColor: isActive ? theme.palette.primary.main : theme.palette.divider,
+                    borderWidth: isActive ? 2 : 1,
+                    position: "relative",
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    "&:hover": {
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                      transform: "translateY(-2px)",
+                    },
+                  }}
+                >
+                  <CardContent sx={{ pb: 1 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
+                      <Box sx={{ maxWidth: "70%" }}>
+                        <Typography variant="h6" fontWeight={700} noWrap>
+                          {proj.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Key: <strong>{proj.jira_project_key || "None"}</strong>
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" spacing={1}>
+                        <Chip
+                          label={isActive ? "Active" : "Activate"}
+                          size="small"
+                          color={isActive ? "primary" : "default"}
+                          onClick={() => dispatch(setActiveProjectId(proj.id))}
+                          sx={{ fontWeight: 600, cursor: "pointer" }}
+                        />
+                        <Chip
+                          label={hasJira ? "Jira Active" : "No Sync"}
+                          size="small"
+                          variant="outlined"
+                          color={hasJira ? "success" : "default"}
+                          sx={{ fontWeight: 600 }}
+                        />
+                      </Stack>
+                    </Stack>
+
+                    <Divider sx={{ my: 1.5 }} />
+
+                    <Typography variant="caption" color="text.secondary" display="block" noWrap>
+                      URL: {proj.jira_base_url || "No domain set"}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" noWrap sx={{ mt: 0.5 }}>
+                      Email: {proj.jira_email || "No email set"}
+                    </Typography>
+                  </CardContent>
+
+                  <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>
                     <Button
-                      variant="outlined"
                       size="small"
-                      startIcon={jiraTesting ? <CircularProgress size={16} color="inherit" /> : <ConnectionIcon />}
-                      onClick={handleTestJiraConnection}
-                      disabled={jiraTesting}
+                      variant="outlined"
+                      startIcon={jiraTesting ? <CircularProgress size={12} /> : <ConnectionIcon />}
+                      onClick={() => handleTestConnection(proj.id)}
+                      disabled={!hasJira || jiraTesting}
                     >
-                      {jiraTesting ? "Testing Jira..." : "Test Jira Connection"}
+                      Test
                     </Button>
-                  </Tooltip>
-                </Stack>
-
-                {jiraTestResult && (
-                  <Alert
-                    severity={jiraTestResult.success ? "success" : "error"}
-                    icon={jiraTestResult.success ? <CheckCircleIcon /> : <ErrorIcon />}
-                    sx={{ mb: 3 }}
-                  >
-                    {jiraTestResult.message}
-                  </Alert>
-                )}
-
-                <Grid container spacing={2.5}>
-                  <Grid item xs={12} sm={6}>
-                    <Tooltip title="Your Atlassian Jira domain instance URL (e.g. https://yourcompany.atlassian.net)" arrow placement="top">
-                      <TextField
-                        fullWidth
-                        label="JIRA_BASE_URL"
-                        placeholder="https://company.atlassian.net"
-                        value={formValues.JIRA_BASE_URL}
-                        onChange={handleChange("JIRA_BASE_URL")}
-                        size="small"
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <HelpOutlineIcon fontSize="small" color="disabled" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    </Tooltip>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <Tooltip title="Atlassian account email address associated with your API token" arrow placement="top">
-                      <TextField
-                        fullWidth
-                        label="JIRA_EMAIL"
-                        placeholder="developer@company.com"
-                        value={formValues.JIRA_EMAIL}
-                        onChange={handleChange("JIRA_EMAIL")}
-                        size="small"
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <HelpOutlineIcon fontSize="small" color="disabled" />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    </Tooltip>
-                  </Grid>
-
-                  <Grid item xs={12} sm={8}>
-                    <Tooltip title="Atlassian API Token generated from id.atlassian.com / Security / API tokens" arrow placement="top">
-                      <TextField
-                        fullWidth
-                        label="JIRA_API_TOKEN"
-                        type={showToken ? "text" : "password"}
-                        value={formValues.JIRA_API_TOKEN}
-                        onChange={handleChange("JIRA_API_TOKEN")}
-                        size="small"
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton size="small" onClick={() => setShowToken(!showToken)}>
-                                {showToken ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                    </Tooltip>
-                  </Grid>
-
-                  <Grid item xs={12} sm={4}>
-                    <Tooltip title="Jira project key prefix (e.g. DEV, PROJ, BUG)" arrow placement="top">
-                      <TextField
-                        fullWidth
-                        label="JIRA_PROJECT_KEY"
-                        placeholder="DEV"
-                        value={formValues.JIRA_PROJECT_KEY}
-                        onChange={handleChange("JIRA_PROJECT_KEY")}
-                        size="small"
-                      />
-                    </Tooltip>
-                  </Grid>
-                </Grid>
-              </Paper>
-            </Grid>
-          </Grid>
-        </form>
+                    <Stack direction="row" spacing={1}>
+                      <IconButton size="small" onClick={() => handleOpenEdit(proj)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" color="error" onClick={() => handleDelete(proj.id, proj.name)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  </CardActions>
+                </Card>
+              </Grid>
+            );
+          })}
+        </Grid>
       )}
+
+      {/* Project Input Form Dialog */}
+      <Dialog open={openModal} onClose={handleClose} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          {editingProj ? `Edit Project: ${editingProj.name}` : "Configure New Project"}
+        </DialogTitle>
+        <form onSubmit={handleSubmit}>
+          <DialogContent dividers>
+            <Grid container spacing={2.5}>
+              <Grid item xs={12}>
+                <TextField
+                  required
+                  fullWidth
+                  label="Project Display Name"
+                  placeholder="e.g. Mobile App Team"
+                  value={formValues.name}
+                  onChange={handleChange("name")}
+                  size="small"
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={4}>
+                <Tooltip title="Jira project key prefix (e.g. DEV, PROJ, BUG)" arrow placement="top">
+                  <TextField
+                    fullWidth
+                    label="Jira Project Key"
+                    placeholder="DEV"
+                    value={formValues.jira_project_key}
+                    onChange={handleChange("jira_project_key")}
+                    size="small"
+                  />
+                </Tooltip>
+              </Grid>
+
+              <Grid item xs={12} sm={8}>
+                <Tooltip title="Atlassian Jira URL (e.g. https://company.atlassian.net)" arrow placement="top">
+                  <TextField
+                    fullWidth
+                    label="Jira Base URL"
+                    placeholder="https://company.atlassian.net"
+                    value={formValues.jira_base_url}
+                    onChange={handleChange("jira_base_url")}
+                    size="small"
+                  />
+                </Tooltip>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Tooltip title="Atlassian account email address associated with your API token" arrow placement="top">
+                  <TextField
+                    fullWidth
+                    label="Jira Email"
+                    placeholder="developer@company.com"
+                    value={formValues.jira_email}
+                    onChange={handleChange("jira_email")}
+                    size="small"
+                  />
+                </Tooltip>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Tooltip title="Atlassian API Token generated from id.atlassian.com Security dashboard" arrow placement="top">
+                  <TextField
+                    fullWidth
+                    label="Jira API Token"
+                    type={showToken ? "text" : "password"}
+                    value={formValues.jira_api_token}
+                    onChange={handleChange("jira_api_token")}
+                    size="small"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton size="small" onClick={() => setShowToken(!showToken)}>
+                            {showToken ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Tooltip>
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button type="submit" variant="contained" disabled={projectSaving}>
+              {projectSaving ? "Saving..." : "Save Project"}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
     </Box>
   );
 }
