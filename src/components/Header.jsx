@@ -98,9 +98,14 @@ export default function Header() {
         </Stack>
 
         {/* Project Selector & Navigation Tabs */}
-        <Stack direction="row" alignItems="center" spacing={3}>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          alignItems="center"
+          spacing={{ xs: 1.5, md: 3 }}
+          sx={{ width: { xs: "100%", md: "auto" }, my: { xs: 1.5, md: 0 } }}
+        >
           {projects.length > 0 && (
-            <FormControl size="small" sx={{ minWidth: 180 }}>
+            <FormControl size="small" sx={{ minWidth: 180, width: { xs: "100%", md: 180 } }}>
               <InputLabel id="project-select-label">Active Project</InputLabel>
               <Select
                 labelId="project-select-label"
@@ -128,6 +133,10 @@ export default function Header() {
             indicatorColor="primary"
             sx={{
               minHeight: 44,
+              width: { xs: "100%", md: "auto" },
+              "& .MuiTabs-flexContainer": {
+                justifyContent: { xs: "center", md: "flex-start" },
+              },
               "& .MuiTab-root": {
                 textTransform: "none",
                 fontWeight: 600,

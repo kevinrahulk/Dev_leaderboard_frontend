@@ -179,7 +179,12 @@ export default function Leaderboard() {
           </Tooltip>
 
           {/* Action Buttons: Import & Sync */}
-          <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+          <Stack
+            direction="row"
+            spacing={1.5}
+            sx={{ width: { xs: "100%", md: "auto" } }}
+            justifyContent={{ xs: "space-between", md: "flex-end" }}
+          >
             <Tooltip title="Import bug export CSV file directly from Jira" arrow>
               <Button
                 component="label"
@@ -188,6 +193,7 @@ export default function Leaderboard() {
                 size="medium"
                 startIcon={uploading ? <CircularProgress size={18} color="inherit" /> : <UploadFileIcon />}
                 disabled={uploading}
+                sx={{ width: { xs: "50%", md: "auto" } }}
               >
                 {uploading ? "Uploading..." : "Upload CSV"}
                 <input type="file" accept=".csv" hidden onChange={onFileChange} />
@@ -202,6 +208,7 @@ export default function Leaderboard() {
                 startIcon={syncing ? <CircularProgress size={18} color="inherit" /> : <SyncIcon />}
                 disabled={syncing}
                 onClick={() => handleSyncJira()}
+                sx={{ width: { xs: "50%", md: "auto" } }}
               >
                 {syncing ? "Syncing Jira..." : "Sync Jira"}
               </Button>
@@ -213,11 +220,16 @@ export default function Leaderboard() {
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={2}
-          alignItems="center"
+          alignItems={{ xs: "stretch", sm: "center" }}
           sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}
         >
-          <Tooltip title="Filter by a specific development sprint or select All Sprints" arrow placement="top" open={sprintOpen ? false : undefined}>
-            <FormControl size="small" sx={{ minWidth: 200 }}>
+          <Tooltip
+            title="Filter by a specific development sprint or select All Sprints"
+            arrow
+            placement="top"
+            open={sprintOpen ? false : undefined}
+          >
+            <FormControl size="small" sx={{ minWidth: 200, width: { xs: "100%", sm: "auto" } }}>
               <InputLabel id="sprint-select-label">Sprint Filter</InputLabel>
               <Select
                 labelId="sprint-select-label"
@@ -240,7 +252,12 @@ export default function Leaderboard() {
           </Tooltip>
 
           {range === "custom" && (
-            <Stack direction="row" spacing={1.5} alignItems="center">
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1.5}
+              alignItems="center"
+              sx={{ width: { xs: "100%", sm: "auto" } }}
+            >
               <Tooltip title="Select Start Date for custom range" arrow placement="top">
                 <TextField
                   type="date"
@@ -249,7 +266,7 @@ export default function Leaderboard() {
                   InputLabelProps={{ shrink: true }}
                   value={startDate}
                   onChange={(e) => dispatch(setCustomDates({ startDate: e.target.value }))}
-                  sx={{ minWidth: 160 }}
+                  sx={{ minWidth: 160, width: { xs: "100%", sm: "auto" } }}
                 />
               </Tooltip>
               <Tooltip title="Select End Date for custom range" arrow placement="top">
@@ -260,7 +277,7 @@ export default function Leaderboard() {
                   InputLabelProps={{ shrink: true }}
                   value={endDate}
                   onChange={(e) => dispatch(setCustomDates({ endDate: e.target.value }))}
-                  sx={{ minWidth: 160 }}
+                  sx={{ minWidth: 160, width: { xs: "100%", sm: "auto" } }}
                 />
               </Tooltip>
             </Stack>

@@ -47,7 +47,15 @@ export default function Podium() {
 
       <Grid container spacing={2.5} alignItems="flex-end">
         {podiumList.map((entry) => (
-          <Grid item xs={12} sm={4} key={entry.developer_id}>
+          <Grid
+            item
+            xs={12}
+            sm={4}
+            key={entry.developer_id}
+            sx={{
+              order: entry.isGold ? { xs: 1, sm: 2 } : entry.rank === 2 ? { xs: 2, sm: 1 } : { xs: 3, sm: 3 },
+            }}
+          >
             <Tooltip title={`${entry.name} - Rank #${entry.rank} with ${entry.bug_count} bugs`} arrow>
               <Paper
                 variant="outlined"
