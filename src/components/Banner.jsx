@@ -51,13 +51,13 @@ export default function Banner() {
               <Chip label="NEW" color="secondary" size="small" sx={{ height: 18, fontSize: 10 }} />
             </Stack>
             <Typography variant="body2" color="text.secondary">
-              Fewer assigned bugs = Higher Star Rank. You can directly update backend <code>.env</code> variables, test Jira credentials, or import CSV exports.
+              Fewer assigned bugs = Higher Star Rank. You can manage multiple projects, test Jira credentials, or import CSV exports.
             </Typography>
           </Box>
         </Stack>
 
         <Stack direction="row" spacing={1} alignItems="center">
-          <Tooltip title="Configure backend environment credentials directly in frontend">
+          <Tooltip title="Configure projects and Atlassian Jira credentials">
             <Button
               variant="outlined"
               size="small"
@@ -65,7 +65,7 @@ export default function Banner() {
               onClick={() => dispatch(setActiveTab(1))}
               sx={{ borderRadius: 2 }}
             >
-              Configure .env
+              Manage Projects
             </Button>
           </Tooltip>
           <IconButton size="small" onClick={() => dispatch(dismissBanner())}>

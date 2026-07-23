@@ -194,7 +194,7 @@ const leaderboardSlice = createSlice({
     jiraTesting: false,
     jiraTestResult: null,
 
-    bannerDismissed: false,
+    bannerDismissed: localStorage.getItem("starholder_banner_dismissed") === "true",
 
     snackbar: {
       open: false,
@@ -230,6 +230,7 @@ const leaderboardSlice = createSlice({
     },
     dismissBanner(state) {
       state.bannerDismissed = true;
+      localStorage.setItem("starholder_banner_dismissed", "true");
     },
     closeSnackbar(state) {
       state.snackbar.open = false;
