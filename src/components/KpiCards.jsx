@@ -33,8 +33,8 @@ export default function KpiCards() {
               background: "linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(217, 119, 6, 0.03) 100%)",
             }}
           >
-            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-              <Box>
+            <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
+              <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                 <Typography variant="caption" color="text.secondary" fontWeight={600} textTransform="uppercase">
                   Top Star Developer
                 </Typography>
@@ -53,6 +53,7 @@ export default function KpiCards() {
                   bgcolor: "#F59E0B",
                   color: "#FFF",
                   boxShadow: "0 4px 10px rgba(245, 158, 11, 0.3)",
+                  flexShrink: 0,
                 }}
               >
                 <WorkspacePremiumIcon />
