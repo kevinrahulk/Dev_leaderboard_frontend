@@ -134,8 +134,11 @@ export const uploadCsvFile = createAsyncThunk(
 
       const summary = await uploadCsvApi(projectId, file);
 
+      // Reset selected sprint ID because old sprints were deleted on fresh sync
+      dispatch(setSprintId(""));
+
       const sprintsRes = await dispatch(fetchSprints()).unwrap();
-      const activeSprint = state.sprintId || (sprintsRes.length > 0 ? sprintsRes[0].id : null);
+      const activeSprint = sprintsRes.length > 0 ? sprintsRes[0].id : "";
 
       dispatch(fetchLeaderboard({ range: state.range, sprintId: activeSprint }));
 
@@ -156,8 +159,11 @@ export const syncJiraData = createAsyncThunk(
 
       const summary = await syncJiraApi(projectId, jql);
 
+      // Reset selected sprint ID because old sprints were deleted on fresh sync
+      dispatch(setSprintId(""));
+
       const sprintsRes = await dispatch(fetchSprints()).unwrap();
-      const activeSprint = state.sprintId || (sprintsRes.length > 0 ? sprintsRes[0].id : null);
+      const activeSprint = sprintsRes.length > 0 ? sprintsRes[0].id : "";
 
       dispatch(fetchLeaderboard({ range: state.range, sprintId: activeSprint }));
 
@@ -192,6 +198,7 @@ const leaderboardSlice = createSlice({
     syncing: false,
 
     jiraTesting: false,
+    testingProjectId: null,
     jiraTestResult: null,
 
     bannerDismissed: localStorage.getItem("starholder_banner_dismissed") === "true",
@@ -320,12 +327,14 @@ const leaderboardSlice = createSlice({
         };
       })
       // testProject
-      .addCase(testProject.pending, (state) => {
+      .addCase(testProject.pending, (state, action) => {
         state.jiraTesting = true;
+        state.testingProjectId = action.meta.arg;
         state.jiraTestResult = null;
       })
       .addCase(testProject.fulfilled, (state, action) => {
         state.jiraTesting = false;
+        state.testingProjectId = null;
         state.jiraTestResult = action.payload;
         state.snackbar = {
           open: true,
@@ -335,6 +344,7 @@ const leaderboardSlice = createSlice({
       })
       .addCase(testProject.rejected, (state, action) => {
         state.jiraTesting = false;
+        state.testingProjectId = null;
         state.jiraTestResult = { success: false, message: action.payload };
         state.snackbar = {
           open: true,

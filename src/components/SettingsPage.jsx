@@ -53,6 +53,7 @@ export default function SettingsPage() {
     projectsLoading,
     projectSaving,
     jiraTesting,
+    testingProjectId,
     jiraTestResult,
   } = useAppSelector((state) => state.leaderboard);
 
@@ -230,7 +231,7 @@ export default function SettingsPage() {
                     <Button
                       size="small"
                       variant="outlined"
-                      startIcon={jiraTesting ? <CircularProgress size={12} /> : <ConnectionIcon />}
+                      startIcon={jiraTesting && testingProjectId === proj.id ? <CircularProgress size={12} /> : <ConnectionIcon />}
                       onClick={() => handleTestConnection(proj.id)}
                       disabled={!hasJira || jiraTesting}
                     >
